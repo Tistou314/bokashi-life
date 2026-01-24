@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Dashboard - Bokashi Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/assets/admin.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__header">
+                <a href="/admin/" class="sidebar__logo">
+                    <span class="sidebar__logo-icon">🌿</span>
+                    <span>Bokashi Admin</span>
+                </a>
+            </div>
+
+            <nav class="sidebar__nav">
+                <div class="sidebar__section">
+                    <a href="/admin/" class="sidebar__link sidebar__link--active">
+                        <span class="sidebar__link-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/admin/editor.html" class="sidebar__link">
+                        <span class="sidebar__link-icon">📝</span>
+                        <span>Éditeur</span>
+                    </a>
+                    <a href="/admin/new-page.html" class="sidebar__link">
+                        <span class="sidebar__link-icon">➕</span>
+                        <span>Nouvelle page</span>
+                    </a>
+                    <a href="/admin/media.html" class="sidebar__link">
+                        <span class="sidebar__link-icon">🖼️</span>
+                        <span>Médias</span>
+                    </a>
+                </div>
+
+                <div class="sidebar__section">
+                    <div class="sidebar__section-title">Pages par silo</div>
+                    <div class="sidebar__tree" id="siloTree">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar__footer">
+                <button class="btn btn--ghost btn--full" onclick="BokashiAdmin.handleLogout()">
+                    <span>🚪</span>
+                    <span>Déconnexion</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="admin-header">
+                <nav class="breadcrumbs">
+                    <span class="breadcrumbs__current">Dashboard</span>
+                </nav>
+                <div class="admin-header__actions">
+                    <a href="/" target="_blank" class="btn btn--secondary btn--sm">
+                        Voir le site →
+                    </a>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- Stats Cards -->
+                <div class="dashboard-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <div class="stat-card__icon">📄</div>
+                        <div class="stat-card__value" id="statPages">--</div>
+                        <div class="stat-card__label">Pages totales</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card__icon">📚</div>
+                        <div class="stat-card__value" id="statSilos">6</div>
+                        <div class="stat-card__label">Silos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card__icon">🖼️</div>
+                        <div class="stat-card__value" id="statImages">--</div>
+                        <div class="stat-card__label">Images</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="dashboard-grid mb-lg">
+                    <a href="/admin/new-page.html" class="stat-card" style="cursor: pointer;">
+                        <div class="stat-card__icon">➕</div>
+                        <div class="stat-card__value" style="font-size: 1.25rem;">Nouvelle page</div>
+                        <div class="stat-card__label">Créer un article, une page hub ou produit</div>
+                    </a>
+                    <a href="/admin/media.html" class="stat-card" style="cursor: pointer;">
+                        <div class="stat-card__icon">📤</div>
+                        <div class="stat-card__value" style="font-size: 1.25rem;">Upload média</div>
+                        <div class="stat-card__label">Ajouter des images au site</div>
+                    </a>
+                </div>
+
+                <!-- Pages List by Silo -->
+                <div class="recent-files">
+                    <div class="recent-files__header">
+                        <h2 class="recent-files__title">Pages par silo</h2>
+                    </div>
+                    <div id="pagesContainer">
+                        <!-- Populated by JS -->
+                        <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                            <div class="loading-spinner" style="margin: 0 auto 1rem;"></div>
+                            Chargement des pages...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/admin/assets/admin.js"></script>
+    <script>
+        const { API, Toast, checkAuth, initSidebarTree, formatRelativeTime } = BokashiAdmin;
+
+        // State
+        let pagesData = null;
+
+        // Initialize
+        async function init() {
+            // Check auth
+            const auth = await checkAuth();
+            if (!auth) return;
+
+            // Load data
+            await Promise.all([
+                loadPages(),
+                loadMediaStats()
+            ]);
+
+            initSidebarTree();
+        }
+
+        // Load pages
+        async function loadPages() {
+            try {
+                const data = await API.pages.list();
+                pagesData = data;
+
+                // Update stats
+                document.getElementById('statPages').textContent = data.stats.totalPages;
+                document.getElementById('statSilos').textContent = data.stats.siloCount;
+
+                // Render sidebar tree
+                renderSiloTree(data.organized.silos, data.silos);
+
+                // Render pages list
+                renderPagesList(data.organized, data.silos);
+
+            } catch (error) {
+                Toast.error('Erreur lors du chargement des pages');
+                console.error(error);
+            }
+        }
+
+        // Load media stats
+        async function loadMediaStats() {
+            try {
+                const data = await API.media.list();
+                document.getElementById('statImages').textContent = data.count;
+            } catch (error) {
+                document.getElementById('statImages').textContent = '?';
+            }
+        }
+
+        // Render sidebar tree
+        function renderSiloTree(silos, silosMeta) {
+            const container = document.getElementById('siloTree');
+            container.innerHTML = '';
+
+            silosMeta.forEach(meta => {
+                const silo = silos[meta.id];
+                if (!silo || !silo.pages.length) return;
+
+                const item = document.createElement('div');
+                item.className = 'sidebar__tree-item';
+                item.innerHTML = `
+                    <button class="sidebar__tree-toggle">
+                        <span class="sidebar__tree-toggle-icon">▶</span>
+                        <span>${meta.icon} ${meta.name}</span>
+                        <span class="text-muted" style="margin-left: auto; font-size: 0.75rem;">${silo.pages.length}</span>
+                    </button>
+                    <div class="sidebar__tree-children">
+                        ${silo.pages.map(page => `
+                            <a href="/admin/editor.html?path=${encodeURIComponent(page.path)}" class="sidebar__tree-file">
+                                ${page.name}
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+
+                container.appendChild(item);
+            });
+
+            // Re-init tree toggles
+            initSidebarTree();
+        }
+
+        // Render pages list
+        function renderPagesList(organized, silosMeta) {
+            const container = document.getElementById('pagesContainer');
+
+            let html = '';
+
+            // Root pages first
+            if (organized.root.length) {
+                html += `
+                    <div class="recent-files__header" style="background: var(--bg-tertiary);">
+                        <span>📁 Racine</span>
+                    </div>
+                `;
+                organized.root.forEach(page => {
+                    html += renderPageItem(page);
+                });
+            }
+
+            // Each silo
+            silosMeta.forEach(meta => {
+                const silo = organized.silos[meta.id];
+                if (!silo || !silo.pages.length) return;
+
+                html += `
+                    <div class="recent-files__header" style="background: var(--bg-tertiary);">
+                        <span>${meta.icon} ${meta.name}</span>
+                        <span class="text-muted">${silo.pages.length} pages</span>
+                    </div>
+                `;
+
+                silo.pages.forEach(page => {
+                    html += renderPageItem(page);
+                });
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderPageItem(page) {
+            const typeIcons = {
+                hub: '📚',
+                article: '📄',
+                product: '🛍️'
+            };
+
+            return `
+                <a href="/admin/editor.html?path=${encodeURIComponent(page.path)}" class="recent-files__item">
+                    <div class="recent-files__item-info">
+                        <span class="recent-files__item-icon">${typeIcons[page.type] || '📄'}</span>
+                        <div>
+                            <div class="recent-files__item-name">${page.name}</div>
+                            <div class="recent-files__item-path">${page.path}</div>
+                        </div>
+                    </div>
+                    <span class="btn btn--ghost btn--sm">Éditer →</span>
+                </a>
+            `;
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

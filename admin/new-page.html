@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Nouvelle page - Bokashi Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/assets/admin.css">
+    <style>
+        .slug-preview {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--accent-green);
+            margin-top: var(--space-sm);
+        }
+        .slug-input-group {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xs);
+        }
+        .slug-prefix {
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+        }
+        .slug-input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__header">
+                <a href="/admin/" class="sidebar__logo">
+                    <span class="sidebar__logo-icon">🌿</span>
+                    <span>Bokashi Admin</span>
+                </a>
+            </div>
+
+            <nav class="sidebar__nav">
+                <div class="sidebar__section">
+                    <a href="/admin/" class="sidebar__link">
+                        <span class="sidebar__link-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/admin/editor.html" class="sidebar__link">
+                        <span class="sidebar__link-icon">📝</span>
+                        <span>Éditeur</span>
+                    </a>
+                    <a href="/admin/new-page.html" class="sidebar__link sidebar__link--active">
+                        <span class="sidebar__link-icon">➕</span>
+                        <span>Nouvelle page</span>
+                    </a>
+                    <a href="/admin/media.html" class="sidebar__link">
+                        <span class="sidebar__link-icon">🖼️</span>
+                        <span>Médias</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar__footer">
+                <button class="btn btn--ghost btn--full" onclick="BokashiAdmin.handleLogout()">
+                    <span>🚪</span>
+                    <span>Déconnexion</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="admin-header">
+                <nav class="breadcrumbs">
+                    <a href="/admin/">Dashboard</a>
+                    <span class="breadcrumbs__separator">→</span>
+                    <span class="breadcrumbs__current">Nouvelle page</span>
+                </nav>
+            </header>
+
+            <div class="content-area">
+                <div class="wizard">
+                    <!-- Steps Indicator -->
+                    <div class="wizard__steps">
+                        <div class="wizard__step wizard__step--active" data-step="1">
+                            <div class="wizard__step-number">1</div>
+                            <span class="wizard__step-label">Type</span>
+                        </div>
+                        <div class="wizard__connector"></div>
+                        <div class="wizard__step" data-step="2">
+                            <div class="wizard__step-number">2</div>
+                            <span class="wizard__step-label">Emplacement</span>
+                        </div>
+                        <div class="wizard__connector"></div>
+                        <div class="wizard__step" data-step="3">
+                            <div class="wizard__step-number">3</div>
+                            <span class="wizard__step-label">Informations</span>
+                        </div>
+                    </div>
+
+                    <!-- Wizard Content -->
+                    <div class="wizard__content">
+                        <!-- Step 1: Type Selection -->
+                        <div class="wizard__step-content" data-step="1">
+                            <h2 class="wizard__title">Quel type de page souhaitez-vous créer ?</h2>
+
+                            <div class="type-cards">
+                                <div class="type-card" data-type="hub" onclick="selectType('hub')">
+                                    <div class="type-card__icon">📚</div>
+                                    <div class="type-card__title">Page Hub</div>
+                                    <div class="type-card__desc">Page d'index pour un silo, avec liens vers les articles</div>
+                                </div>
+
+                                <div class="type-card" data-type="article" onclick="selectType('article')">
+                                    <div class="type-card__icon">📄</div>
+                                    <div class="type-card__title">Article</div>
+                                    <div class="type-card__desc">Guide complet, tutoriel ou article informatif</div>
+                                </div>
+
+                                <div class="type-card" data-type="product" onclick="selectType('product')">
+                                    <div class="type-card__icon">🛍️</div>
+                                    <div class="type-card__title">Fiche Produit</div>
+                                    <div class="type-card__desc">Test et avis sur un produit avec lien affilié</div>
+                                </div>
+                            </div>
+
+                            <div class="wizard__actions">
+                                <div></div>
+                                <button class="btn btn--primary" id="nextBtn1" disabled onclick="goToStep(2)">
+                                    Suivant →
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Location -->
+                        <div class="wizard__step-content hidden" data-step="2">
+                            <h2 class="wizard__title">Où placer cette page ?</h2>
+
+                            <div class="form-group">
+                                <label class="form-label">Silo parent</label>
+                                <select id="siloSelect" class="form-input" onchange="updateSlugPreview()">
+                                    <option value="">-- Sélectionner un silo --</option>
+                                    <option value="comprendre-bokashi">📚 Comprendre le Bokashi</option>
+                                    <option value="acheter-bokashi">🛒 Acheter un Bokashi</option>
+                                    <option value="activateur-bokashi">🧪 Activateur Bokashi</option>
+                                    <option value="fabriquer-bokashi">🔧 Fabriquer son Bokashi</option>
+                                    <option value="utiliser-bokashi">📖 Utiliser le Bokashi</option>
+                                    <option value="bokashi-jardin">🌱 Bokashi au Jardin</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Slug (URL)</label>
+                                <div class="slug-input-group">
+                                    <span class="slug-prefix" id="slugPrefix">/silo/</span>
+                                    <input type="text" id="slugInput" class="form-input slug-input"
+                                           placeholder="mon-article" oninput="updateSlugPreview()">
+                                    <span class="slug-prefix">.html</span>
+                                </div>
+                                <div class="slug-preview" id="slugPreview">
+                                    URL finale : https://bokashilife.com/...
+                                </div>
+                            </div>
+
+                            <div id="slugError" class="form-error hidden">
+                                <span>⚠️</span>
+                                <span id="slugErrorText"></span>
+                            </div>
+
+                            <div class="wizard__actions">
+                                <button class="btn btn--secondary" onclick="goToStep(1)">
+                                    ← Retour
+                                </button>
+                                <button class="btn btn--primary" id="nextBtn2" disabled onclick="validateStep2()">
+                                    Suivant →
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Information -->
+                        <div class="wizard__step-content hidden" data-step="3">
+                            <h2 class="wizard__title">Informations de base</h2>
+
+                            <div class="form-group">
+                                <label class="form-label">Titre de la page</label>
+                                <input type="text" id="titleInput" class="form-input"
+                                       placeholder="Ex: Comment utiliser le bokashi en appartement">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Description (meta description)</label>
+                                <textarea id="descInput" class="form-input" rows="3"
+                                          placeholder="Description courte pour les moteurs de recherche (150-160 caractères)"></textarea>
+                                <div class="char-counter" id="descCounter">0 / 160</div>
+                            </div>
+
+                            <div class="wizard__actions">
+                                <button class="btn btn--secondary" onclick="goToStep(2)">
+                                    ← Retour
+                                </button>
+                                <button class="btn btn--primary" id="createBtn" onclick="createPage()">
+                                    <span id="createBtnText">Créer la page</span>
+                                    <span id="createBtnSpinner" class="spinner hidden"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/admin/assets/admin.js"></script>
+    <script>
+        const { API, Toast, checkAuth, slugify } = BokashiAdmin;
+
+        // State
+        let selectedType = null;
+        let selectedSilo = null;
+        let pageSlug = null;
+
+        // Initialize
+        async function init() {
+            const auth = await checkAuth();
+            if (!auth) return;
+
+            // Init description counter
+            document.getElementById('descInput').addEventListener('input', () => {
+                const len = document.getElementById('descInput').value.length;
+                const counter = document.getElementById('descCounter');
+                counter.textContent = `${len} / 160`;
+                counter.className = 'char-counter' + (len > 160 ? ' error' : len > 140 ? ' warning' : '');
+            });
+        }
+
+        // Select type
+        function selectType(type) {
+            selectedType = type;
+
+            // Update UI
+            document.querySelectorAll('.type-card').forEach(card => {
+                card.classList.toggle('type-card--selected', card.dataset.type === type);
+            });
+
+            document.getElementById('nextBtn1').disabled = false;
+        }
+
+        // Go to step
+        function goToStep(step) {
+            // Hide all steps
+            document.querySelectorAll('.wizard__step-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+
+            // Show target step
+            document.querySelector(`.wizard__step-content[data-step="${step}"]`).classList.remove('hidden');
+
+            // Update step indicators
+            document.querySelectorAll('.wizard__step').forEach(el => {
+                const stepNum = parseInt(el.dataset.step);
+                el.classList.toggle('wizard__step--active', stepNum === step);
+                el.classList.toggle('wizard__step--completed', stepNum < step);
+            });
+
+            document.querySelectorAll('.wizard__connector').forEach((el, i) => {
+                el.classList.toggle('wizard__connector--completed', i < step - 1);
+            });
+        }
+
+        // Update slug preview
+        function updateSlugPreview() {
+            const silo = document.getElementById('siloSelect').value;
+            const slug = document.getElementById('slugInput').value;
+
+            selectedSilo = silo;
+            pageSlug = slugify(slug);
+
+            // Update prefix
+            document.getElementById('slugPrefix').textContent = silo ? `/${silo}/` : '/';
+
+            // Update preview
+            const fullPath = silo ? `${silo}/${pageSlug}.html` : `${pageSlug}.html`;
+            document.getElementById('slugPreview').textContent =
+                `URL finale : https://bokashilife.com/${fullPath}`;
+
+            // Enable/disable next button
+            document.getElementById('nextBtn2').disabled = !silo || !slug;
+        }
+
+        // Validate step 2
+        async function validateStep2() {
+            const silo = document.getElementById('siloSelect').value;
+            const slug = document.getElementById('slugInput').value;
+
+            if (!silo || !slug) {
+                showSlugError('Veuillez remplir tous les champs');
+                return;
+            }
+
+            // Check if page already exists
+            const path = `${silo}/${slugify(slug)}.html`;
+
+            try {
+                // Try to read the file - if it exists, show error
+                await API.pages.read(path);
+                showSlugError('Une page avec ce slug existe déjà');
+            } catch (e) {
+                // File doesn't exist - good!
+                hideSlugError();
+                goToStep(3);
+            }
+        }
+
+        function showSlugError(message) {
+            document.getElementById('slugErrorText').textContent = message;
+            document.getElementById('slugError').classList.remove('hidden');
+        }
+
+        function hideSlugError() {
+            document.getElementById('slugError').classList.add('hidden');
+        }
+
+        // Create page
+        async function createPage() {
+            const title = document.getElementById('titleInput').value.trim();
+            const description = document.getElementById('descInput').value.trim();
+
+            if (!title) {
+                Toast.error('Veuillez entrer un titre');
+                return;
+            }
+
+            const createBtn = document.getElementById('createBtn');
+            const createBtnText = document.getElementById('createBtnText');
+            const createBtnSpinner = document.getElementById('createBtnSpinner');
+
+            createBtn.disabled = true;
+            createBtnText.classList.add('hidden');
+            createBtnSpinner.classList.remove('hidden');
+
+            try {
+                const path = `${selectedSilo}/${pageSlug}.html`;
+
+                await API.pages.create({
+                    path,
+                    type: selectedType,
+                    title,
+                    description,
+                    silo: selectedSilo
+                });
+
+                Toast.success('Page créée avec succès !');
+
+                // Redirect to editor
+                setTimeout(() => {
+                    window.location.href = `/admin/editor.html?path=${encodeURIComponent(path)}`;
+                }, 1000);
+
+            } catch (error) {
+                Toast.error(error.message || 'Erreur lors de la création');
+                createBtn.disabled = false;
+                createBtnText.classList.remove('hidden');
+                createBtnSpinner.classList.add('hidden');
+            }
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

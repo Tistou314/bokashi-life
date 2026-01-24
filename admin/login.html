@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Connexion - Bokashi Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/assets/admin.css">
+</head>
+<body class="login-page">
+    <div class="login-card">
+        <div class="login-logo">
+            <span class="login-logo__icon">🌿</span>
+            <span class="login-logo__text">Bokashi Admin</span>
+            <p class="login-logo__subtitle">Panneau d'administration</p>
+        </div>
+
+        <form id="loginForm" novalidate>
+            <div class="form-group">
+                <label for="username" class="form-label">Identifiant</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    class="form-input"
+                    placeholder="Votre identifiant"
+                    autocomplete="username"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Mot de passe</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-input"
+                    placeholder="Votre mot de passe"
+                    autocomplete="current-password"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-checkbox">
+                    <input type="checkbox" id="remember" name="remember">
+                    <span>Se souvenir de moi</span>
+                </label>
+            </div>
+
+            <div id="errorMessage" class="form-error hidden">
+                <span>⚠️</span>
+                <span id="errorText"></span>
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--full btn--lg" id="submitBtn">
+                <span id="btnText">Se connecter</span>
+                <span id="btnSpinner" class="spinner hidden"></span>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Check if already authenticated
+        (async function checkAuth() {
+            try {
+                const res = await fetch('/api/auth/verify');
+                const data = await res.json();
+                if (data.authenticated) {
+                    window.location.href = '/admin/';
+                }
+            } catch (e) {
+                // Not authenticated, stay on login
+            }
+        })();
+
+        // Login form handler
+        const form = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get form values
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+
+            // Validate
+            if (!username || !password) {
+                showError('Veuillez remplir tous les champs');
+                return;
+            }
+
+            // Show loading
+            setLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password, remember })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Redirect to dashboard
+                    window.location.href = '/admin/';
+                } else {
+                    showError(data.error || 'Erreur de connexion');
+                    shakeForm();
+                }
+            } catch (error) {
+                showError('Erreur de connexion au serveur');
+                shakeForm();
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        function setLoading(loading) {
+            submitBtn.disabled = loading;
+            btnText.classList.toggle('hidden', loading);
+            btnSpinner.classList.toggle('hidden', !loading);
+        }
+
+        function shakeForm() {
+            const card = document.querySelector('.login-card');
+            card.style.animation = 'none';
+            card.offsetHeight; // Trigger reflow
+            card.style.animation = 'shake 0.5s ease';
+        }
+
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Focus first input
+        document.getElementById('username').focus();
+    </script>
+</body>
+</html>

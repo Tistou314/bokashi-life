@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Médias - Bokashi Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/assets/admin.css">
+    <style>
+        .media-card {
+            position: relative;
+        }
+        .media-card__actions {
+            position: absolute;
+            top: var(--space-sm);
+            right: var(--space-sm);
+            display: none;
+            gap: var(--space-xs);
+        }
+        .media-card:hover .media-card__actions {
+            display: flex;
+        }
+        .media-card__checkbox {
+            position: absolute;
+            top: var(--space-sm);
+            left: var(--space-sm);
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent-green);
+        }
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        .lightbox.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .lightbox__content {
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+        .lightbox__content img {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        .lightbox__close {
+            position: absolute;
+            top: var(--space-lg);
+            right: var(--space-lg);
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+        .lightbox__info {
+            position: absolute;
+            bottom: var(--space-lg);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-secondary);
+            padding: var(--space-md) var(--space-lg);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+        }
+        .upload-progress {
+            margin-top: var(--space-lg);
+        }
+        .upload-progress__item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-sm);
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            margin-bottom: var(--space-sm);
+        }
+        .upload-progress__bar {
+            flex: 1;
+            height: 4px;
+            background: var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .upload-progress__fill {
+            height: 100%;
+            background: var(--accent-green);
+            transition: width 0.3s;
+        }
+        .bulk-actions {
+            display: none;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-lg);
+        }
+        .bulk-actions.visible {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__header">
+                <a href="/admin/" class="sidebar__logo">
+                    <span class="sidebar__logo-icon">🌿</span>
+                    <span>Bokashi Admin</span>
+                </a>
+            </div>
+
+            <nav class="sidebar__nav">
+                <div class="sidebar__section">
+                    <a href="/admin/" class="sidebar__link">
+                        <span class="sidebar__link-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/admin/editor.html" class="sidebar__link">
+                        <span class="sidebar__link-icon">📝</span>
+                        <span>Éditeur</span>
+                    </a>
+                    <a href="/admin/new-page.html" class="sidebar__link">
+                        <span class="sidebar__link-icon">➕</span>
+                        <span>Nouvelle page</span>
+                    </a>
+                    <a href="/admin/media.html" class="sidebar__link sidebar__link--active">
+                        <span class="sidebar__link-icon">🖼️</span>
+                        <span>Médias</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar__footer">
+                <button class="btn btn--ghost btn--full" onclick="BokashiAdmin.handleLogout()">
+                    <span>🚪</span>
+                    <span>Déconnexion</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="admin-header">
+                <nav class="breadcrumbs">
+                    <a href="/admin/">Dashboard</a>
+                    <span class="breadcrumbs__separator">→</span>
+                    <span class="breadcrumbs__current">Médias</span>
+                </nav>
+            </header>
+
+            <div class="content-area">
+                <!-- Header with search and upload -->
+                <div class="media-header">
+                    <div class="media-search">
+                        <span class="media-search__icon">🔍</span>
+                        <input type="text" class="media-search__input" id="searchInput"
+                               placeholder="Rechercher une image..." oninput="filterImages()">
+                    </div>
+                    <button class="btn btn--primary" onclick="showUploadModal()">
+                        📤 Upload
+                    </button>
+                </div>
+
+                <!-- Bulk Actions -->
+                <div class="bulk-actions" id="bulkActions">
+                    <span id="selectedCount">0 sélectionnée(s)</span>
+                    <button class="btn btn--secondary btn--sm" onclick="copySelectedPaths()">
+                        📋 Copier les chemins
+                    </button>
+                    <button class="btn btn--danger btn--sm" onclick="deleteSelected()">
+                        🗑️ Supprimer
+                    </button>
+                    <button class="btn btn--ghost btn--sm" onclick="clearSelection()">
+                        Annuler
+                    </button>
+                </div>
+
+                <!-- Upload Zone (hidden by default) -->
+                <div id="uploadZone" class="upload-zone hidden" onclick="document.getElementById('fileInput').click()"
+                     ondragover="handleDragOver(event)" ondrop="handleDrop(event)" ondragleave="handleDragLeave(event)">
+                    <div class="upload-zone__icon">📤</div>
+                    <div class="upload-zone__text">Glissez-déposez des images ici</div>
+                    <div class="upload-zone__hint">ou cliquez pour parcourir (JPG, PNG, GIF, SVG, WebP - max 4MB)</div>
+                    <input type="file" id="fileInput" hidden multiple accept="image/*" onchange="handleFileSelect(event)">
+                </div>
+
+                <!-- Upload Progress -->
+                <div id="uploadProgress" class="upload-progress hidden"></div>
+
+                <!-- Images Grid -->
+                <div class="media-grid" id="mediaGrid">
+                    <!-- Loading state -->
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+                        <div class="loading-spinner" style="margin: 0 auto 1rem;"></div>
+                        Chargement des images...
+                    </div>
+                </div>
+
+                <!-- Empty state -->
+                <div id="emptyState" class="hidden" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                    <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;">🖼️</div>
+                    <h3>Aucune image</h3>
+                    <p class="mt-sm">Uploadez votre première image pour commencer</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+        <button class="lightbox__close">×</button>
+        <div class="lightbox__content" onclick="event.stopPropagation()">
+            <img id="lightboxImage" src="" alt="">
+        </div>
+        <div class="lightbox__info" onclick="event.stopPropagation()">
+            <span id="lightboxName"></span>
+            <button class="btn btn--secondary btn--sm" onclick="copyCurrentPath()">📋 Copier le chemin</button>
+            <button class="btn btn--danger btn--sm" onclick="deleteCurrent()">🗑️ Supprimer</button>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal__header">
+                <h3 class="modal__title">Upload d'images</h3>
+                <button class="modal__close" onclick="hideUploadModal()">×</button>
+            </div>
+            <div class="modal__body">
+                <div class="upload-zone" onclick="document.getElementById('modalFileInput').click()"
+                     ondragover="handleDragOver(event)" ondrop="handleModalDrop(event)" ondragleave="handleDragLeave(event)">
+                    <div class="upload-zone__icon">📤</div>
+                    <div class="upload-zone__text">Glissez-déposez des images ici</div>
+                    <div class="upload-zone__hint">ou cliquez pour parcourir</div>
+                    <input type="file" id="modalFileInput" hidden multiple accept="image/*" onchange="handleModalFileSelect(event)">
+                </div>
+                <div id="modalUploadProgress" class="upload-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/admin/assets/admin.js"></script>
+    <script>
+        const { API, Toast, Modal, checkAuth, readFileAsDataURL } = BokashiAdmin;
+
+        // State
+        let allImages = [];
+        let selectedImages = new Set();
+        let currentLightboxImage = null;
+
+        // Initialize
+        async function init() {
+            const auth = await checkAuth();
+            if (!auth) return;
+
+            await loadImages();
+        }
+
+        // Load images
+        async function loadImages() {
+            try {
+                const data = await API.media.list();
+                allImages = data.images;
+                renderImages(allImages);
+            } catch (error) {
+                Toast.error('Erreur lors du chargement des images');
+                console.error(error);
+            }
+        }
+
+        // Render images grid
+        function renderImages(images) {
+            const grid = document.getElementById('mediaGrid');
+            const empty = document.getElementById('emptyState');
+
+            if (images.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+
+            grid.innerHTML = images.map(img => `
+                <div class="media-card" data-path="${img.path}">
+                    <input type="checkbox" class="media-card__checkbox"
+                           onchange="toggleSelection('${img.path}')"
+                           ${selectedImages.has(img.path) ? 'checked' : ''}>
+                    <div class="media-card__actions">
+                        <button class="btn btn--secondary btn--sm" onclick="event.stopPropagation(); copyPath('${img.path}')" title="Copier le chemin">
+                            📋
+                        </button>
+                        <button class="btn btn--danger btn--sm" onclick="event.stopPropagation(); deleteImage('${img.path}')" title="Supprimer">
+                            🗑️
+                        </button>
+                    </div>
+                    <div class="media-card__image" onclick="openLightbox('${img.url}', '${img.name}', '${img.path}')">
+                        ${img.name.endsWith('.svg')
+                            ? `<img src="${img.url}" alt="${img.name}" style="padding: 1rem;">`
+                            : `<img src="${img.url}" alt="${img.name}">`
+                        }
+                    </div>
+                    <div class="media-card__info">
+                        <div class="media-card__name" title="${img.name}">${img.name}</div>
+                        <div class="media-card__size">${formatSize(img.size)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter images
+        function filterImages() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allImages.filter(img =>
+                img.name.toLowerCase().includes(query)
+            );
+            renderImages(filtered);
+        }
+
+        // Format file size
+        function formatSize(bytes) {
+            if (!bytes || bytes === 0) return 'Taille inconnue';
+            const kb = bytes / 1024;
+            if (kb < 1024) return `${kb.toFixed(1)} KB`;
+            return `${(kb / 1024).toFixed(1)} MB`;
+        }
+
+        // Selection management
+        function toggleSelection(path) {
+            if (selectedImages.has(path)) {
+                selectedImages.delete(path);
+            } else {
+                selectedImages.add(path);
+            }
+            updateBulkActions();
+        }
+
+        function clearSelection() {
+            selectedImages.clear();
+            document.querySelectorAll('.media-card__checkbox').forEach(cb => cb.checked = false);
+            updateBulkActions();
+        }
+
+        function updateBulkActions() {
+            const bulk = document.getElementById('bulkActions');
+            const count = document.getElementById('selectedCount');
+
+            if (selectedImages.size > 0) {
+                bulk.classList.add('visible');
+                count.textContent = `${selectedImages.size} sélectionnée(s)`;
+            } else {
+                bulk.classList.remove('visible');
+            }
+        }
+
+        // Copy path to clipboard
+        function copyPath(path) {
+            navigator.clipboard.writeText('/' + path);
+            Toast.success('Chemin copié !');
+        }
+
+        function copySelectedPaths() {
+            const paths = Array.from(selectedImages).map(p => '/' + p).join('\n');
+            navigator.clipboard.writeText(paths);
+            Toast.success(`${selectedImages.size} chemin(s) copié(s) !`);
+        }
+
+        function copyCurrentPath() {
+            if (currentLightboxImage) {
+                copyPath(currentLightboxImage.path);
+            }
+        }
+
+        // Delete image
+        async function deleteImage(path) {
+            Modal.confirm('Supprimer cette image ?', async () => {
+                try {
+                    await API.media.delete(path);
+                    Toast.success('Image supprimée');
+                    allImages = allImages.filter(img => img.path !== path);
+                    selectedImages.delete(path);
+                    renderImages(allImages);
+                    updateBulkActions();
+                    closeLightbox();
+                } catch (error) {
+                    Toast.error(error.message || 'Erreur lors de la suppression');
+                }
+            });
+        }
+
+        async function deleteSelected() {
+            if (selectedImages.size === 0) return;
+
+            Modal.confirm(`Supprimer ${selectedImages.size} image(s) ?`, async () => {
+                const paths = Array.from(selectedImages);
+                let deleted = 0;
+
+                for (const path of paths) {
+                    try {
+                        await API.media.delete(path);
+                        deleted++;
+                        allImages = allImages.filter(img => img.path !== path);
+                        selectedImages.delete(path);
+                    } catch (e) {
+                        console.error(`Failed to delete ${path}`, e);
+                    }
+                }
+
+                Toast.success(`${deleted} image(s) supprimée(s)`);
+                renderImages(allImages);
+                updateBulkActions();
+            });
+        }
+
+        function deleteCurrent() {
+            if (currentLightboxImage) {
+                deleteImage(currentLightboxImage.path);
+            }
+        }
+
+        // Lightbox
+        function openLightbox(url, name, path) {
+            currentLightboxImage = { url, name, path };
+            document.getElementById('lightboxImage').src = url;
+            document.getElementById('lightboxName').textContent = name;
+            document.getElementById('lightbox').classList.add('active');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('active');
+            currentLightboxImage = null;
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeLightbox();
+                hideUploadModal();
+            }
+        });
+
+        // Upload Modal
+        function showUploadModal() {
+            document.getElementById('uploadModal').classList.add('active');
+        }
+
+        function hideUploadModal() {
+            document.getElementById('uploadModal').classList.remove('active');
+        }
+
+        // Drag and drop
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            if (files.length) uploadFiles(files);
+        }
+
+        function handleModalDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            if (files.length) uploadFiles(files, 'modalUploadProgress');
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            if (files.length) uploadFiles(files);
+            e.target.value = '';
+        }
+
+        function handleModalFileSelect(e) {
+            const files = Array.from(e.target.files);
+            if (files.length) uploadFiles(files, 'modalUploadProgress');
+            e.target.value = '';
+        }
+
+        // Upload files
+        async function uploadFiles(files, progressContainerId = 'uploadProgress') {
+            const container = document.getElementById(progressContainerId);
+            container.classList.remove('hidden');
+            container.innerHTML = '';
+
+            const results = [];
+
+            for (const file of files) {
+                // Size check (4MB)
+                if (file.size > 4 * 1024 * 1024) {
+                    Toast.error(`${file.name} dépasse 4MB`);
+                    continue;
+                }
+
+                // Create progress item
+                const item = document.createElement('div');
+                item.className = 'upload-progress__item';
+                item.innerHTML = `
+                    <span style="width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</span>
+                    <div class="upload-progress__bar">
+                        <div class="upload-progress__fill" style="width: 0%"></div>
+                    </div>
+                    <span class="upload-status">En attente...</span>
+                `;
+                container.appendChild(item);
+
+                const fill = item.querySelector('.upload-progress__fill');
+                const status = item.querySelector('.upload-status');
+
+                try {
+                    // Read file
+                    status.textContent = 'Lecture...';
+                    fill.style.width = '30%';
+
+                    const dataUrl = await readFileAsDataURL(file);
+
+                    // Upload
+                    status.textContent = 'Upload...';
+                    fill.style.width = '60%';
+
+                    await API.media.upload(file.name, dataUrl);
+
+                    fill.style.width = '100%';
+                    fill.style.background = 'var(--success)';
+                    status.textContent = '✓';
+                    status.style.color = 'var(--success)';
+
+                    results.push({ success: true, name: file.name });
+
+                } catch (error) {
+                    fill.style.width = '100%';
+                    fill.style.background = 'var(--error)';
+                    status.textContent = '✕ ' + (error.message || 'Erreur');
+                    status.style.color = 'var(--error)';
+
+                    results.push({ success: false, name: file.name, error });
+                }
+            }
+
+            // Summary
+            const successful = results.filter(r => r.success).length;
+            if (successful > 0) {
+                Toast.success(`${successful} image(s) uploadée(s)`);
+                await loadImages(); // Reload gallery
+            }
+
+            // Clean up progress after delay
+            setTimeout(() => {
+                container.classList.add('hidden');
+                container.innerHTML = '';
+            }, 3000);
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

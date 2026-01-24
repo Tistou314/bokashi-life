@@ -1,0 +1,17 @@
+# robots.txt - bokashilife.com
+# Guide complet sur le bokashi
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://bokashilife.com/sitemap.xml
+
+# Bloquer les ressources non indexables
+Disallow: /assets/css/
+Disallow: /assets/js/
+Disallow: /assets/fonts/
+
+# Bloquer l'administration
+Disallow: /admin/
+Disallow: /api/

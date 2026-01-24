@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Éditeur - Bokashi Admin</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/admin/assets/admin.css">
+    <style>
+        .editor-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: var(--space-md);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            resize: vertical;
+        }
+        .editor-textarea:focus {
+            outline: none;
+            border-color: var(--accent-green);
+        }
+        .char-counter {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: right;
+            margin-top: var(--space-xs);
+        }
+        .char-counter.warning {
+            color: var(--warning);
+        }
+        .char-counter.error {
+            color: var(--error);
+        }
+        .preview-container {
+            background: white;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            height: 100%;
+        }
+        .no-page-selected {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        .no-page-selected__icon {
+            font-size: 4rem;
+            margin-bottom: var(--space-lg);
+            opacity: 0.5;
+        }
+        .section-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-md);
+        }
+        .section-card__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-md);
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section-card__header:hover {
+            background: var(--bg-hover);
+        }
+        .section-card__body {
+            padding: var(--space-md);
+            display: none;
+        }
+        .section-card.expanded .section-card__body {
+            display: block;
+        }
+        .section-card__toggle {
+            transition: transform 0.2s;
+        }
+        .section-card.expanded .section-card__toggle {
+            transform: rotate(90deg);
+        }
+        .faq-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-sm);
+        }
+        .serp-preview {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            color: #202124;
+        }
+        .serp-preview__title {
+            color: #1a0dab;
+            font-size: 1.25rem;
+            margin-bottom: var(--space-xs);
+            word-wrap: break-word;
+        }
+        .serp-preview__url {
+            color: #006621;
+            font-size: 0.875rem;
+            margin-bottom: var(--space-xs);
+        }
+        .serp-preview__desc {
+            color: #545454;
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar__header">
+                <a href="/admin/" class="sidebar__logo">
+                    <span class="sidebar__logo-icon">🌿</span>
+                    <span>Bokashi Admin</span>
+                </a>
+            </div>
+
+            <nav class="sidebar__nav">
+                <div class="sidebar__section">
+                    <a href="/admin/" class="sidebar__link">
+                        <span class="sidebar__link-icon">📊</span>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/admin/editor.html" class="sidebar__link sidebar__link--active">
+                        <span class="sidebar__link-icon">📝</span>
+                        <span>Éditeur</span>
+                    </a>
+                    <a href="/admin/new-page.html" class="sidebar__link">
+                        <span class="sidebar__link-icon">➕</span>
+                        <span>Nouvelle page</span>
+                    </a>
+                    <a href="/admin/media.html" class="sidebar__link">
+                        <span class="sidebar__link-icon">🖼️</span>
+                        <span>Médias</span>
+                    </a>
+                </div>
+
+                <div class="sidebar__section">
+                    <div class="sidebar__section-title">Pages</div>
+                    <div class="sidebar__tree" id="siloTree">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar__footer">
+                <button class="btn btn--ghost btn--full" onclick="BokashiAdmin.handleLogout()">
+                    <span>🚪</span>
+                    <span>Déconnexion</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="admin-header">
+                <nav class="breadcrumbs" id="breadcrumbs">
+                    <a href="/admin/">Dashboard</a>
+                    <span class="breadcrumbs__separator">→</span>
+                    <span class="breadcrumbs__current">Éditeur</span>
+                </nav>
+                <div class="admin-header__actions">
+                    <a href="#" id="viewPageBtn" target="_blank" class="btn btn--secondary btn--sm hidden">
+                        Voir la page →
+                    </a>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- No page selected state -->
+                <div id="noPageSelected" class="no-page-selected">
+                    <div class="no-page-selected__icon">📄</div>
+                    <h2>Sélectionnez une page</h2>
+                    <p class="text-muted mt-sm">Choisissez une page dans la sidebar ou depuis le dashboard</p>
+                    <a href="/admin/" class="btn btn--primary mt-lg">← Retour au dashboard</a>
+                </div>
+
+                <!-- Editor Layout -->
+                <div id="editorContainer" class="hidden">
+                    <!-- Tabs -->
+                    <div class="editor-tabs">
+                        <button class="editor-tab editor-tab--active" data-tab="content">Contenu</button>
+                        <button class="editor-tab" data-tab="seo">SEO</button>
+                        <button class="editor-tab" data-tab="faq">FAQ</button>
+                        <button class="editor-tab" data-tab="raw">Code HTML</button>
+                    </div>
+
+                    <!-- Editor Split View -->
+                    <div class="editor-layout">
+                        <!-- Left Panel - Editor -->
+                        <div class="editor-panel">
+                            <div class="editor-panel__header">
+                                <span id="editorTitle">Édition</span>
+                                <span class="text-muted" id="pageType"></span>
+                            </div>
+                            <div class="editor-panel__content" id="editorContent">
+                                <!-- Content Tab -->
+                                <div class="editor-tab-content" data-tab="content">
+                                    <div class="editor-section">
+                                        <label class="editor-section__title">Titre (H1)</label>
+                                        <input type="text" id="editH1" class="form-input" placeholder="Titre de la page">
+                                    </div>
+
+                                    <div class="editor-section">
+                                        <label class="editor-section__title">Introduction</label>
+                                        <textarea id="editIntro" class="editor-textarea" rows="4" placeholder="Paragraphe d'introduction..."></textarea>
+                                    </div>
+
+                                    <div class="editor-section" id="sectionsContainer">
+                                        <label class="editor-section__title">Sections</label>
+                                        <div id="sectionsList"></div>
+                                        <button class="btn btn--secondary btn--sm mt-md" onclick="addSection()">
+                                            + Ajouter une section
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- SEO Tab -->
+                                <div class="editor-tab-content hidden" data-tab="seo">
+                                    <div class="editor-section">
+                                        <label class="editor-section__title">Meta Title</label>
+                                        <input type="text" id="editMetaTitle" class="form-input" placeholder="Titre SEO">
+                                        <div class="char-counter" id="metaTitleCounter">0 / 60</div>
+                                    </div>
+
+                                    <div class="editor-section">
+                                        <label class="editor-section__title">Meta Description</label>
+                                        <textarea id="editMetaDesc" class="editor-textarea" rows="3" placeholder="Description pour les moteurs de recherche..."></textarea>
+                                        <div class="char-counter" id="metaDescCounter">0 / 160</div>
+                                    </div>
+
+                                    <div class="editor-section">
+                                        <label class="editor-section__title">URL Canonique</label>
+                                        <input type="text" id="editCanonical" class="form-input" placeholder="https://bokashilife.com/...">
+                                    </div>
+
+                                    <div class="editor-section">
+                                        <label class="editor-section__title">Aperçu Google</label>
+                                        <div class="serp-preview">
+                                            <div class="serp-preview__title" id="serpTitle">Titre de la page</div>
+                                            <div class="serp-preview__url" id="serpUrl">https://bokashilife.com/page</div>
+                                            <div class="serp-preview__desc" id="serpDesc">Description de la page...</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- FAQ Tab -->
+                                <div class="editor-tab-content hidden" data-tab="faq">
+                                    <div class="editor-section">
+                                        <label class="editor-section__title">Questions / Réponses</label>
+                                        <div id="faqList"></div>
+                                        <button class="btn btn--secondary btn--sm mt-md" onclick="addFaq()">
+                                            + Ajouter une question
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Raw HTML Tab -->
+                                <div class="editor-tab-content hidden" data-tab="raw">
+                                    <div class="editor-section">
+                                        <label class="editor-section__title">Code HTML complet</label>
+                                        <textarea id="editRawHtml" class="editor-textarea" style="min-height: 500px; font-family: var(--font-mono);"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel - Preview -->
+                        <div class="editor-panel">
+                            <div class="editor-panel__header">
+                                <span>Prévisualisation</span>
+                                <button class="btn btn--ghost btn--sm" onclick="refreshPreview()">🔄 Rafraîchir</button>
+                            </div>
+                            <div class="preview-container">
+                                <iframe id="previewFrame" class="preview-frame"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="editor-footer" id="editorFooter">
+                <div class="editor-footer__status" id="editorStatus">
+                    <span>✓</span>
+                    <span>Aucune modification</span>
+                </div>
+                <div class="editor-footer__actions">
+                    <button class="btn btn--secondary" onclick="resetChanges()">Annuler</button>
+                    <button class="btn btn--primary" id="saveBtn" onclick="saveChanges()">
+                        <span id="saveBtnText">💾 Sauvegarder</span>
+                        <span id="saveBtnSpinner" class="spinner hidden"></span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/admin/assets/admin.js"></script>
+    <script>
+        const { API, Toast, Modal, Drafts, checkAuth, initSidebarTree, debounce } = BokashiAdmin;
+
+        // State
+        let currentPage = null;
+        let originalContent = '';
+        let hasChanges = false;
+        let currentSha = null;
+
+        // Get path from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const pagePath = urlParams.get('path');
+
+        // Initialize
+        async function init() {
+            const auth = await checkAuth();
+            if (!auth) return;
+
+            // Load sidebar
+            await loadSidebar();
+
+            // Load page if path provided
+            if (pagePath) {
+                await loadPage(pagePath);
+            }
+
+            // Init tabs
+            initTabs();
+
+            // Init keyboard shortcuts
+            BokashiAdmin.initKeyboardShortcuts({
+                save: saveChanges,
+                escape: resetChanges
+            });
+
+            // Init char counters
+            initCharCounters();
+
+            // Auto-save to draft every 30s
+            setInterval(() => {
+                if (hasChanges && pagePath) {
+                    const content = document.getElementById('editRawHtml').value;
+                    Drafts.save(pagePath, content);
+                }
+            }, 30000);
+        }
+
+        // Load sidebar
+        async function loadSidebar() {
+            try {
+                const data = await API.pages.list();
+                renderSiloTree(data.organized.silos, data.silos);
+                initSidebarTree();
+            } catch (e) {
+                console.error('Failed to load sidebar', e);
+            }
+        }
+
+        // Render sidebar tree
+        function renderSiloTree(silos, silosMeta) {
+            const container = document.getElementById('siloTree');
+            container.innerHTML = '';
+
+            silosMeta.forEach(meta => {
+                const silo = silos[meta.id];
+                if (!silo || !silo.pages.length) return;
+
+                const item = document.createElement('div');
+                item.className = 'sidebar__tree-item';
+                item.innerHTML = `
+                    <button class="sidebar__tree-toggle">
+                        <span class="sidebar__tree-toggle-icon">▶</span>
+                        <span>${meta.icon} ${meta.name}</span>
+                    </button>
+                    <div class="sidebar__tree-children">
+                        ${silo.pages.map(page => `
+                            <a href="/admin/editor.html?path=${encodeURIComponent(page.path)}"
+                               class="sidebar__tree-file ${page.path === pagePath ? 'sidebar__tree-file--active' : ''}">
+                                ${page.name}
+                            </a>
+                        `).join('')}
+                    </div>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        // Load page
+        async function loadPage(path) {
+            try {
+                document.getElementById('noPageSelected').classList.add('hidden');
+                document.getElementById('editorContainer').classList.remove('hidden');
+
+                const data = await API.pages.read(path);
+                currentPage = data;
+                originalContent = data.raw;
+                currentSha = data.sha;
+
+                // Update UI
+                updateBreadcrumbs(path);
+                document.getElementById('viewPageBtn').href = '/' + path;
+                document.getElementById('viewPageBtn').classList.remove('hidden');
+                document.getElementById('editorTitle').textContent = path.split('/').pop();
+                document.getElementById('pageType').textContent = data.parsed.type;
+
+                // Fill form fields
+                populateForm(data);
+
+                // Check for draft
+                const draft = Drafts.get(path);
+                if (draft && draft !== data.raw) {
+                    Modal.confirm(
+                        'Un brouillon non sauvegardé existe. Voulez-vous le restaurer ?',
+                        () => {
+                            document.getElementById('editRawHtml').value = draft;
+                            markAsChanged();
+                        }
+                    );
+                }
+
+                // Initial preview
+                refreshPreview();
+
+            } catch (error) {
+                Toast.error('Erreur lors du chargement de la page');
+                console.error(error);
+            }
+        }
+
+        // Populate form
+        function populateForm(data) {
+            const { parsed, raw } = data;
+
+            // Content
+            document.getElementById('editH1').value = parsed.content.h1 || '';
+
+            // SEO
+            document.getElementById('editMetaTitle').value = parsed.meta.title || '';
+            document.getElementById('editMetaDesc').value = parsed.meta.description || '';
+            document.getElementById('editCanonical').value = parsed.meta.canonical || '';
+
+            // FAQ
+            renderFaqList(parsed.content.faq || []);
+
+            // Sections
+            renderSectionsList(parsed.content.sections || []);
+
+            // Raw HTML
+            document.getElementById('editRawHtml').value = raw;
+
+            // Update counters
+            updateCharCounters();
+            updateSerpPreview();
+        }
+
+        // Init tabs
+        function initTabs() {
+            const tabs = document.querySelectorAll('.editor-tab');
+            const contents = document.querySelectorAll('.editor-tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetTab = tab.dataset.tab;
+
+                    tabs.forEach(t => t.classList.remove('editor-tab--active'));
+                    tab.classList.add('editor-tab--active');
+
+                    contents.forEach(c => {
+                        c.classList.toggle('hidden', c.dataset.tab !== targetTab);
+                    });
+                });
+            });
+        }
+
+        // Init char counters
+        function initCharCounters() {
+            const titleInput = document.getElementById('editMetaTitle');
+            const descInput = document.getElementById('editMetaDesc');
+
+            titleInput.addEventListener('input', () => {
+                updateCharCounters();
+                updateSerpPreview();
+                markAsChanged();
+            });
+
+            descInput.addEventListener('input', () => {
+                updateCharCounters();
+                updateSerpPreview();
+                markAsChanged();
+            });
+
+            // Track changes on all inputs
+            document.querySelectorAll('#editorContent input, #editorContent textarea').forEach(el => {
+                el.addEventListener('input', () => markAsChanged());
+            });
+        }
+
+        function updateCharCounters() {
+            const titleLen = document.getElementById('editMetaTitle').value.length;
+            const descLen = document.getElementById('editMetaDesc').value.length;
+
+            const titleCounter = document.getElementById('metaTitleCounter');
+            const descCounter = document.getElementById('metaDescCounter');
+
+            titleCounter.textContent = `${titleLen} / 60`;
+            titleCounter.className = 'char-counter' + (titleLen > 60 ? ' error' : titleLen > 50 ? ' warning' : '');
+
+            descCounter.textContent = `${descLen} / 160`;
+            descCounter.className = 'char-counter' + (descLen > 160 ? ' error' : descLen > 140 ? ' warning' : '');
+        }
+
+        function updateSerpPreview() {
+            const title = document.getElementById('editMetaTitle').value || 'Titre de la page';
+            const desc = document.getElementById('editMetaDesc').value || 'Description de la page...';
+            const url = document.getElementById('editCanonical').value || 'https://bokashilife.com/page';
+
+            document.getElementById('serpTitle').textContent = title.slice(0, 70);
+            document.getElementById('serpDesc').textContent = desc.slice(0, 160);
+            document.getElementById('serpUrl').textContent = url;
+        }
+
+        // Render FAQ list
+        function renderFaqList(faqs) {
+            const container = document.getElementById('faqList');
+            container.innerHTML = faqs.map((faq, i) => `
+                <div class="faq-item" data-index="${i}">
+                    <div class="form-group">
+                        <label class="form-label">Question</label>
+                        <input type="text" class="form-input faq-question" value="${escapeHtml(faq.question)}" placeholder="Question...">
+                    </div>
+                    <div class="form-group mb-sm">
+                        <label class="form-label">Réponse</label>
+                        <textarea class="editor-textarea faq-answer" rows="3" placeholder="Réponse...">${escapeHtml(faq.answer)}</textarea>
+                    </div>
+                    <button class="btn btn--danger btn--sm" onclick="removeFaq(${i})">Supprimer</button>
+                </div>
+            `).join('');
+
+            // Add change listeners
+            container.querySelectorAll('input, textarea').forEach(el => {
+                el.addEventListener('input', () => markAsChanged());
+            });
+        }
+
+        function addFaq() {
+            const container = document.getElementById('faqList');
+            const index = container.children.length;
+
+            const item = document.createElement('div');
+            item.className = 'faq-item';
+            item.dataset.index = index;
+            item.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">Question</label>
+                    <input type="text" class="form-input faq-question" placeholder="Question...">
+                </div>
+                <div class="form-group mb-sm">
+                    <label class="form-label">Réponse</label>
+                    <textarea class="editor-textarea faq-answer" rows="3" placeholder="Réponse..."></textarea>
+                </div>
+                <button class="btn btn--danger btn--sm" onclick="removeFaq(${index})">Supprimer</button>
+            `;
+
+            container.appendChild(item);
+            markAsChanged();
+
+            item.querySelectorAll('input, textarea').forEach(el => {
+                el.addEventListener('input', () => markAsChanged());
+            });
+        }
+
+        function removeFaq(index) {
+            const container = document.getElementById('faqList');
+            const item = container.querySelector(`[data-index="${index}"]`);
+            if (item) {
+                item.remove();
+                markAsChanged();
+            }
+        }
+
+        // Render sections list
+        function renderSectionsList(sections) {
+            const container = document.getElementById('sectionsList');
+            container.innerHTML = sections.map((section, i) => `
+                <div class="section-card" data-index="${i}">
+                    <div class="section-card__header" onclick="toggleSection(this)">
+                        <span><span class="section-card__toggle">▶</span> ${escapeHtml(section.title)}</span>
+                        <button class="btn btn--danger btn--sm" onclick="event.stopPropagation(); removeSection(${i})">×</button>
+                    </div>
+                    <div class="section-card__body">
+                        <div class="form-group">
+                            <label class="form-label">Titre (H2)</label>
+                            <input type="text" class="form-input section-title" value="${escapeHtml(section.title)}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ID</label>
+                            <input type="text" class="form-input section-id" value="${escapeHtml(section.id)}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Contenu</label>
+                            <textarea class="editor-textarea section-content" rows="6">${escapeHtml(section.content)}</textarea>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            container.querySelectorAll('input, textarea').forEach(el => {
+                el.addEventListener('input', () => markAsChanged());
+            });
+        }
+
+        function toggleSection(header) {
+            header.parentElement.classList.toggle('expanded');
+        }
+
+        function addSection() {
+            const container = document.getElementById('sectionsList');
+            const index = container.children.length;
+
+            const item = document.createElement('div');
+            item.className = 'section-card expanded';
+            item.dataset.index = index;
+            item.innerHTML = `
+                <div class="section-card__header" onclick="toggleSection(this)">
+                    <span><span class="section-card__toggle">▶</span> Nouvelle section</span>
+                    <button class="btn btn--danger btn--sm" onclick="event.stopPropagation(); removeSection(${index})">×</button>
+                </div>
+                <div class="section-card__body">
+                    <div class="form-group">
+                        <label class="form-label">Titre (H2)</label>
+                        <input type="text" class="form-input section-title" placeholder="Titre de la section">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ID</label>
+                        <input type="text" class="form-input section-id" placeholder="id-de-la-section">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contenu</label>
+                        <textarea class="editor-textarea section-content" rows="6" placeholder="Contenu HTML de la section..."></textarea>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(item);
+            markAsChanged();
+
+            item.querySelectorAll('input, textarea').forEach(el => {
+                el.addEventListener('input', () => markAsChanged());
+            });
+        }
+
+        function removeSection(index) {
+            const container = document.getElementById('sectionsList');
+            const item = container.querySelector(`[data-index="${index}"]`);
+            if (item) {
+                item.remove();
+                markAsChanged();
+            }
+        }
+
+        // Update breadcrumbs
+        function updateBreadcrumbs(path) {
+            const parts = path.split('/');
+            const breadcrumbs = document.getElementById('breadcrumbs');
+
+            let html = '<a href="/admin/">Dashboard</a>';
+            html += '<span class="breadcrumbs__separator">→</span>';
+            html += '<a href="/admin/editor.html">Éditeur</a>';
+
+            if (parts.length > 1) {
+                html += '<span class="breadcrumbs__separator">→</span>';
+                html += `<span class="text-muted">${parts[0]}</span>`;
+            }
+
+            html += '<span class="breadcrumbs__separator">→</span>';
+            html += `<span class="breadcrumbs__current">${parts[parts.length - 1]}</span>`;
+
+            breadcrumbs.innerHTML = html;
+        }
+
+        // Mark as changed
+        function markAsChanged() {
+            hasChanges = true;
+            const status = document.getElementById('editorStatus');
+            status.innerHTML = '<span style="color: var(--warning);">⚠️</span><span>Modifications non sauvegardées</span>';
+            status.classList.add('editor-footer__status--unsaved');
+        }
+
+        // Reset changes
+        function resetChanges() {
+            if (!hasChanges) return;
+
+            Modal.confirm('Annuler toutes les modifications ?', () => {
+                if (currentPage) {
+                    populateForm(currentPage);
+                    hasChanges = false;
+                    const status = document.getElementById('editorStatus');
+                    status.innerHTML = '<span>✓</span><span>Aucune modification</span>';
+                    status.classList.remove('editor-footer__status--unsaved');
+                    Drafts.remove(pagePath);
+                }
+            });
+        }
+
+        // Save changes
+        async function saveChanges() {
+            if (!pagePath) return;
+
+            const saveBtn = document.getElementById('saveBtn');
+            const saveBtnText = document.getElementById('saveBtnText');
+            const saveBtnSpinner = document.getElementById('saveBtnSpinner');
+
+            saveBtn.disabled = true;
+            saveBtnText.classList.add('hidden');
+            saveBtnSpinner.classList.remove('hidden');
+
+            try {
+                // Get content - use raw HTML for now (simple approach)
+                const content = document.getElementById('editRawHtml').value;
+
+                await API.pages.update(pagePath, content, currentSha);
+
+                Toast.success('Page sauvegardée avec succès');
+                hasChanges = false;
+                Drafts.remove(pagePath);
+
+                const status = document.getElementById('editorStatus');
+                status.innerHTML = '<span style="color: var(--success);">✓</span><span>Sauvegardé</span>';
+                status.classList.remove('editor-footer__status--unsaved');
+
+                // Reload to get new SHA
+                await loadPage(pagePath);
+
+            } catch (error) {
+                Toast.error(error.message || 'Erreur lors de la sauvegarde');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtnText.classList.remove('hidden');
+                saveBtnSpinner.classList.add('hidden');
+            }
+        }
+
+        // Refresh preview
+        function refreshPreview() {
+            const content = document.getElementById('editRawHtml').value;
+            const frame = document.getElementById('previewFrame');
+
+            // Create blob URL for preview
+            const blob = new Blob([content], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            frame.src = url;
+
+            // Cleanup old blob URLs
+            frame.onload = () => URL.revokeObjectURL(url);
+        }
+
+        // Helper
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // Warn before leaving with unsaved changes
+        window.addEventListener('beforeunload', (e) => {
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

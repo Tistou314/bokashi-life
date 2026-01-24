@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#FBF9F3"/>
+
+  <!-- Decorative pattern -->
+  <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+    <circle cx="20" cy="20" r="2" fill="#C5D9B7" opacity="0.4"/>
+  </pattern>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+
+  <!-- Green decorative shape top-right -->
+  <ellipse cx="1100" cy="80" rx="200" ry="150" fill="#C5D9B7" opacity="0.3"/>
+
+  <!-- Terracotta decorative shape bottom-left -->
+  <ellipse cx="100" cy="550" rx="180" ry="120" fill="#E8C4A8" opacity="0.3"/>
+
+  <!-- Main bokashi bucket illustration - handmade style -->
+  <g transform="translate(750, 180)">
+    <!-- Bucket body with wobbly edges -->
+    <path d="M50 60
+             C48 65, 45 180, 50 250
+             C55 270, 100 285, 175 285
+             C250 285, 295 270, 300 250
+             C305 180, 302 65, 300 60 Z"
+          fill="#7BA05B" stroke="#4A6741" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Bucket top rim -->
+    <ellipse cx="175" cy="55" rx="130" ry="25" fill="#5B8A42" stroke="#4A6741" stroke-width="3"/>
+
+    <!-- Lid with handle -->
+    <ellipse cx="175" cy="45" rx="125" ry="22" fill="#7BA05B" stroke="#4A6741" stroke-width="3"/>
+    <rect x="145" y="20" width="60" height="18" rx="9" fill="#4A6741"/>
+
+    <!-- Drainage tap -->
+    <rect x="270" y="220" width="35" height="20" rx="4" fill="#C67D4E" stroke="#8B6F47" stroke-width="2"/>
+    <circle cx="295" cy="230" r="6" fill="#8B6F47"/>
+
+    <!-- Decorative lines on bucket -->
+    <path d="M80 100 Q175 85 270 100" stroke="#5B8A42" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M70 150 Q175 135 280 150" stroke="#5B8A42" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- Sparkles/fermentation bubbles -->
+    <circle cx="120" cy="180" r="8" fill="#F4E7C5" opacity="0.8"/>
+    <circle cx="200" cy="200" r="6" fill="#F4E7C5" opacity="0.6"/>
+    <circle cx="160" cy="220" r="5" fill="#F4E7C5" opacity="0.7"/>
+    <circle cx="230" cy="170" r="7" fill="#F4E7C5" opacity="0.5"/>
+  </g>
+
+  <!-- Small vegetables illustrations -->
+  <g transform="translate(850, 480)">
+    <!-- Carrot -->
+    <path d="M0 40 L15 0 L30 40 Z" fill="#E87D4E" stroke="#C65D2E" stroke-width="2"/>
+    <path d="M12 0 C10 -15, 20 -15, 18 0" stroke="#7BA05B" stroke-width="3" fill="none"/>
+  </g>
+
+  <g transform="translate(920, 470)">
+    <!-- Apple -->
+    <circle cx="20" cy="25" r="22" fill="#C65D2E" stroke="#8B4D2E" stroke-width="2"/>
+    <path d="M20 5 C22 -5, 28 -3, 26 5" stroke="#4A6741" stroke-width="2" fill="none"/>
+    <ellipse cx="22" cy="0" rx="6" ry="4" fill="#7BA05B"/>
+  </g>
+
+  <g transform="translate(990, 485)">
+    <!-- Leaf/lettuce -->
+    <path d="M0 30 Q15 0, 30 10 Q35 25, 25 40 Q10 45, 0 30Z" fill="#7BA05B" stroke="#4A6741" stroke-width="2"/>
+    <path d="M5 30 Q15 15, 25 25" stroke="#4A6741" stroke-width="1" fill="none"/>
+  </g>
+
+  <!-- Logo and text -->
+  <g transform="translate(80, 200)">
+    <!-- Emoji leaf -->
+    <text x="0" y="80" font-size="72">🌱</text>
+
+    <!-- Site name - handwritten style -->
+    <text x="90" y="75" font-family="Georgia, serif" font-size="64" font-weight="bold" fill="#2D3E28">
+      Bokashi<tspan fill="#7BA05B">Life</tspan>
+    </text>
+
+    <!-- Tagline with handwritten feel -->
+    <text x="95" y="130" font-family="Georgia, serif" font-size="28" fill="#5C5C5C" font-style="italic">
+      Le guide du compostage en appartement
+    </text>
+
+    <!-- Decorative underline -->
+    <path d="M95 145 Q250 155, 480 140" stroke="#C67D4E" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
+  </g>
+
+  <!-- URL at bottom -->
+  <text x="80" y="580" font-family="Arial, sans-serif" font-size="22" fill="#8B8B8B">
+    bokashilife.com
+  </text>
+
+  <!-- Decorative corner elements -->
+  <g transform="translate(1120, 550)">
+    <circle cx="0" cy="0" r="6" fill="#7BA05B"/>
+    <circle cx="20" cy="10" r="4" fill="#C67D4E"/>
+    <circle cx="10" cy="25" r="5" fill="#C5D9B7"/>
+  </g>
+</svg>

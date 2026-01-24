@@ -1,0 +1,13 @@
+{
+  "name": "bokashi-life",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site Bokashi Life avec backoffice",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "jose": "^5.2.0",
+    "bcryptjs": "^2.4.3"
+  }
+}
