@@ -19,6 +19,15 @@ export default async function handler(req, res) {
     const validUsername = process.env.ADMIN_USERNAME;
     const passwordHash = process.env.ADMIN_PASSWORD_HASH;
 
+    // Debug logging
+    console.log('Login attempt:', {
+      receivedUsername: username,
+      expectedUsername: validUsername,
+      usernameMatch: username === validUsername,
+      hashExists: !!passwordHash,
+      hashPrefix: passwordHash ? passwordHash.substring(0, 10) : 'N/A'
+    });
+
     if (!validUsername || !passwordHash) {
       console.error('Missing ADMIN_USERNAME or ADMIN_PASSWORD_HASH env vars');
       return res.status(500).json({ error: 'Configuration serveur manquante' });
@@ -26,11 +35,13 @@ export default async function handler(req, res) {
 
     // Verify username
     if (username !== validUsername) {
+      console.log('Username mismatch');
       return res.status(401).json({ error: 'Identifiants incorrects' });
     }
 
     // Verify password
     const isValid = await bcrypt.compare(password, passwordHash);
+    console.log('Password check result:', isValid);
     if (!isValid) {
       return res.status(401).json({ error: 'Identifiants incorrects' });
     }
