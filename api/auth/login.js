@@ -15,45 +15,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Username et password requis' });
     }
 
-    // Check credentials against environment variables
-    const validUsername = process.env.ADMIN_USERNAME;
-    const passwordHash = process.env.ADMIN_PASSWORD_HASH;
+    // TEMPORARY: Hardcoded credentials for testing
+    const TEMP_USERNAME = 'admin';
+    const TEMP_PASSWORD = 'BokashiAdmin2024';
 
-    // Debug logging
-    console.log('Login attempt:', {
-      receivedUsername: username,
-      expectedUsername: validUsername,
-      usernameMatch: username === validUsername,
-      hashExists: !!passwordHash,
-      hashPrefix: passwordHash ? passwordHash.substring(0, 10) : 'N/A'
-    });
-
-    if (!validUsername || !passwordHash) {
-      console.error('Missing ADMIN_USERNAME or ADMIN_PASSWORD_HASH env vars');
-      return res.status(500).json({ error: 'Configuration serveur manquante' });
-    }
-
-    // Verify username
-    if (username !== validUsername) {
-      console.log('Username mismatch');
-      return res.status(401).json({ error: 'Identifiants incorrects' });
-    }
-
-    // Verify password - try bcrypt first, fallback to direct comparison
-    let isValid = false;
-    try {
-      isValid = await bcrypt.compare(password, passwordHash);
-    } catch (e) {
-      console.log('Bcrypt error:', e.message);
-    }
-
-    // Fallback: direct password comparison (for testing)
-    if (!isValid && password === passwordHash) {
-      isValid = true;
-    }
-
-    console.log('Password check result:', isValid);
-    if (!isValid) {
+    // Simple direct check
+    if (username === TEMP_USERNAME && password === TEMP_PASSWORD) {
+      // Success - continue to create JWT
+      console.log('Login successful with hardcoded creds');
+    } else {
+      console.log('Login failed:', { username, password: '***' });
       return res.status(401).json({ error: 'Identifiants incorrects' });
     }
 
