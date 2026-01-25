@@ -1,13 +1,22 @@
 ﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-3FFNEWQRPN"></script>
+<link rel="preconnect" href="https://www.googletagmanager.com">
+<!-- Google Analytics (charge apres le rendu) -->
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-3FFNEWQRPN');
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    var script = document.createElement('script');
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=G-3FFNEWQRPN';
+    script.async = true;
+    document.head.appendChild(script);
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', 'G-3FFNEWQRPN');
+  }, 100);
+});
 </script>
   <meta charset="UTF-8">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
