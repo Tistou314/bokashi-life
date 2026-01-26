@@ -5,6 +5,9 @@
       "maxDuration": 10
     }
   },
+  "redirects": [
+    { "source": "/favicon.ico", "destination": "/favicon.svg", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
