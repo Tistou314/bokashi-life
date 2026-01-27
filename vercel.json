@@ -6,7 +6,9 @@
     }
   },
   "redirects": [
-    { "source": "/favicon.ico", "destination": "/favicon.svg", "permanent": true }
+    { "source": "/favicon.ico", "destination": "/favicon.svg", "permanent": true },
+    { "source": "/utiliser-bokashi/hiver", "destination": "/utiliser-bokashi/hiver.html", "permanent": true },
+    { "source": "/utiliser-bokashi/sans-jardin", "destination": "/utiliser-bokashi/sans-jardin.html", "permanent": true }
   ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" }
