@@ -15,16 +15,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Username et password requis' });
     }
 
-    // TEMPORARY: Hardcoded credentials for testing
-    const TEMP_USERNAME = 'admin';
-    const TEMP_PASSWORD = 'BokashiAdmin2024';
+    // Get credentials from environment variables
+    const adminUsername = process.env.ADMIN_USERNAME;
+    const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
 
-    // Simple direct check
-    if (username === TEMP_USERNAME && password === TEMP_PASSWORD) {
-      // Success - continue to create JWT
-      console.log('Login successful with hardcoded creds');
-    } else {
-      console.log('Login failed:', { username, password: '***' });
+    if (!adminUsername || !adminPasswordHash) {
+      console.error('Missing ADMIN_USERNAME or ADMIN_PASSWORD_HASH environment variables');
+      return res.status(500).json({ error: 'Configuration serveur incorrecte' });
+    }
+
+    // Verify credentials
+    const usernameMatch = username === adminUsername;
+    const passwordMatch = await bcrypt.compare(password, adminPasswordHash);
+
+    if (!usernameMatch || !passwordMatch) {
+      // Add delay to prevent timing attacks
+      await new Promise(resolve => setTimeout(resolve, 300));
       return res.status(401).json({ error: 'Identifiants incorrects' });
     }
 
