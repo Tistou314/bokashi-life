@@ -6,6 +6,12 @@
     }
   },
   "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.bokashilife.com" }],
+      "destination": "https://bokashilife.com/:path*",
+      "permanent": true
+    },
     { "source": "/favicon.ico", "destination": "/favicon.svg", "permanent": true },
     { "source": "/utiliser-bokashi/hiver", "destination": "/utiliser-bokashi/hiver.html", "permanent": true },
     { "source": "/utiliser-bokashi/sans-jardin", "destination": "/utiliser-bokashi/sans-jardin.html", "permanent": true },
