@@ -8,8 +8,8 @@
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.bokashilife.com" }],
-      "destination": "https://bokashilife.com/:path*",
+      "has": [{ "type": "host", "value": "bokashilife.com" }],
+      "destination": "https://www.bokashilife.com/:path*",
       "permanent": true
     },
     { "source": "/favicon.ico", "destination": "/favicon.svg", "permanent": true },

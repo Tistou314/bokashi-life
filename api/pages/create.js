@@ -70,7 +70,7 @@ function generateTemplate(type, options) {
   const parts = path.split('/');
   const siloName = getSiloName(silo);
 
-  const baseUrl = 'https://bokashilife.com';
+  const baseUrl = 'https://www.bokashilife.com';
   const canonical = `${baseUrl}/${path.replace('.html', '')}`;
 
   // Common head section

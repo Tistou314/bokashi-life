@@ -256,14 +256,14 @@
 
                                     <div class="editor-section">
                                         <label class="editor-section__title">URL Canonique</label>
-                                        <input type="text" id="editCanonical" class="form-input" placeholder="https://bokashilife.com/...">
+                                        <input type="text" id="editCanonical" class="form-input" placeholder="https://www.bokashilife.com/...">
                                     </div>
 
                                     <div class="editor-section">
                                         <label class="editor-section__title">Aperçu Google</label>
                                         <div class="serp-preview">
                                             <div class="serp-preview__title" id="serpTitle">Titre de la page</div>
-                                            <div class="serp-preview__url" id="serpUrl">https://bokashilife.com/page</div>
+                                            <div class="serp-preview__url" id="serpUrl">https://www.bokashilife.com/page</div>
                                             <div class="serp-preview__desc" id="serpDesc">Description de la page...</div>
                                         </div>
                                     </div>
@@ -537,7 +537,7 @@
         function updateSerpPreview() {
             const title = document.getElementById('editMetaTitle').value || 'Titre de la page';
             const desc = document.getElementById('editMetaDesc').value || 'Description de la page...';
-            const url = document.getElementById('editCanonical').value || 'https://bokashilife.com/page';
+            const url = document.getElementById('editCanonical').value || 'https://www.bokashilife.com/page';
 
             document.getElementById('serpTitle').textContent = title.slice(0, 70);
             document.getElementById('serpDesc').textContent = desc.slice(0, 160);
